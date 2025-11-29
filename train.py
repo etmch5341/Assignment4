@@ -3,65 +3,15 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from diffusion import DiffusionProcess
+import matplotlib
+# Force matplotlib to not use any Xwindow backend.
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
-from IPython import display
 import os
-import math
 from tqdm import tqdm
 
-# --- Reused Visualization Code from Assignment 2 ---
-def visualize_progress(metrics, display_handle=None, display_id='visualization'):
-    """
-    Real-time visualization of training metrics and generated images.
-    Now saves the plot to disk as 'latest_progress.png'.
-    """
-    max_cols = 4
-    n_plots = len(metrics)
-    n_cols = min(n_plots, max_cols)
-    n_rows = math.ceil(n_plots / n_cols)
-    figsize = (15, 3 * n_rows)
-    
-    # Create figure
-    fig = plt.figure(num=200, figsize=figsize)
-    plt.clf()
-    
-    # Plot Metrics (Loss)
-    for idx, name in enumerate(list(metrics.keys())):
-        if name != 'images':
-            plt.subplot(n_rows, n_cols, idx + 1)
-            if len(metrics[name]) > 0:
-                plt.plot(metrics[name], label=name)
-            plt.title(name)
-            plt.xlabel('Iteration')
-            plt.ylabel('Value')
-            plt.grid(True)
-
-    # Plot Images
-    images = metrics.get('images', None)
-    if images is not None:
-        ax = plt.subplot(n_rows, n_cols, n_plots)
-        ax.set_title('Generated Samples')
-        if isinstance(images, torch.Tensor):
-            images = images.cpu().detach().numpy()
-        plt.imshow(images, cmap='gray')
-        plt.axis('off')
-
-    plt.tight_layout()
-    
-    # --- NEW: Save the plot to disk ---
-    # This overwrites the file every time so you always have the latest plot
-    plt.savefig("./results/training_summary.png") 
-    # ----------------------------------
-
-    if display_handle is None:
-        display_handle = display.display(display.HTML(''), display_id=display_id)
-    display_handle.update(fig)
-    plt.close()
-    return display_handle
-
-# --- Training Loop ---
-def train(epochs=10, batch_size=64, device='cuda'):
-    # 1. Setup
+def train(epochs=10, batch_size=128, learning_rate=3e-4, device='cuda'):
+    # 1. Setup Environment
     if device == 'cuda' and not torch.cuda.is_available():
         device = 'cpu'
     print(f"Training on {device}...")
@@ -69,72 +19,83 @@ def train(epochs=10, batch_size=64, device='cuda'):
     os.makedirs("./results", exist_ok=True)
     os.makedirs("./models", exist_ok=True)
 
-    # 2. Data
+    # 2. Prepare Data (MNIST)
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,)) 
     ])
+    
     dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
-    # 3. Model
+    # 3. Initialize Diffusion Process
     process = DiffusionProcess(
         image_size=28, 
         channels=1, 
         hidden_dims=[32, 64, 128], 
         noise_steps=1000, 
+        beta_start=1e-4, 
+        beta_end=0.02, 
         device=device
     )
     
-    # 4. Visualization Setup
-    visual_metric = {
-        'Loss': [],
-        'images': None
-    }
-    display_handle = None
+    # 4. Training Loop
+    loss_history = []
     
-    # 5. Loop
+    print(f"Starting training for {epochs} epochs...")
+    
     for epoch in range(epochs):
         process.model.train()
         pbar = tqdm(dataloader)
+        epoch_loss = 0
         
         for i, (images, _) in enumerate(pbar):
             images = images.to(device)
             
-            # Train Step
+            # Perform single training step
             loss = process.train_step(images)
             
-            # Update Metrics
-            visual_metric['Loss'].append(loss)
-            pbar.set_description(f"Epoch {epoch+1} | Loss: {loss:.4f}")
+            epoch_loss += loss
+            pbar.set_description(f"Epoch {epoch+1}/{epochs} | Loss: {loss:.4f}")
             
-            # Update Plot (Loss only) every 100 iterations
-            if i % 100 == 0:
-                display_handle = visualize_progress(visual_metric, display_handle, display_id='diffusion_train')
+        # Log average loss for this epoch
+        avg_loss = epoch_loss / len(dataloader)
+        loss_history.append(avg_loss)
         
-        # --- End of Epoch: Sample Images ---
-        print(f"Sampling epoch {epoch+1}...")
-        sampled_images = process.sample(num_samples=16)
-        
-        # Manual Reshape to 4x4 Grid (Matches Assignment 2 style)
-        # 16 images -> 4x4 grid of 28x28
-        grid = sampled_images.reshape(4, 4, 1, 28, 28).permute(2, 0, 3, 1, 4).reshape(4*28, 4*28)
-        
-        # Denormalize: [-1, 1] -> [0, 1]
-        grid = (grid + 1) / 2
-        grid = grid.clamp(0, 1)
-        
-        # Update Visual Metric with new images
-        visual_metric['images'] = grid.cpu().numpy()
-        
-        # Final update for the epoch
-        display_handle = visualize_progress(visual_metric, display_handle, display_id='diffusion_train')
-        
-        # Save to file as well
-        save_image(sampled_images, f"./results/sample_epoch_{epoch+1}.png", nrow=4, normalize=True, value_range=(-1, 1))
+        # 5. Sampling (Save images to disk only)
+        # We save samples periodically so you can check progress in the file explorer
+        if (epoch + 1) % 1 == 0 or epoch == epochs - 1:
+            process.model.eval()
+            with torch.no_grad():
+                sampled_images = process.sample(num_samples=16)
+                # Denormalize from [-1, 1] to [0, 1] for saving
+                sampled_images = (sampled_images + 1) / 2
+                save_image(sampled_images, f"./results/sample_epoch_{epoch+1}.png", nrow=4)
+            process.model.train()
 
-    # Save Model
+    # 6. Save Model
     torch.save(process.model.state_dict(), "./models/ddpm_mnist.pth")
-    print("Training Complete.")
+    print("Training Complete. Model saved.")
     
-    return visual_metric['Loss']
+    # 7. Plot and Save Training Curve (Final Step)
+    plt.figure(figsize=(10, 5))
+    plt.plot(loss_history, label='Training Loss')
+    plt.title('Diffusion Model Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('MSE Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("./results/training_loss.png")
+    print("Loss curve saved to ./results/training_loss.png")
+    
+    return loss_history
+
+if __name__ == "__main__":
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
+        
+    train(epochs=5, batch_size=128, device=device)
