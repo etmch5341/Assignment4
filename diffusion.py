@@ -12,6 +12,18 @@ class DiffusionProcess:
             beta_end: Final noise variance
             noise_steps: Number of diffusion steps
         """
+        
+        def cosine_beta_schedule(timesteps, s=0.008):
+            """
+            Cosine schedule as proposed in https://arxiv.org/abs/2102.09672
+            """
+            steps = timesteps + 1
+            x = torch.linspace(0, timesteps, steps)
+            alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
+            alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
+            betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
+            return torch.clip(betas, 0.0001, 0.9999)
+        
         super().__init__()
         self.beta_start = beta_start
         self.beta_end = beta_end
@@ -32,7 +44,10 @@ class DiffusionProcess:
         self.hidden_dims = hidden_dims
     
         # 1. Define Beta Schedule (Linear)
-        self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
+        # self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
+        
+        # Define Cosine Beta Schedule (alternative)
+        self.betas = cosine_beta_schedule(noise_steps).to(device)
         
         # 2. Calculate Alphas
         self.alphas = 1.0 - self.betas
