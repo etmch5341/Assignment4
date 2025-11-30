@@ -15,14 +15,17 @@ class DiffusionProcess:
         
         def cosine_beta_schedule(timesteps, s=0.008):
             """
-            Cosine schedule as proposed in https://arxiv.org/abs/2102.09672
+            cosine schedule as proposed in https://arxiv.org/abs/2102.09672
             """
             steps = timesteps + 1
             x = torch.linspace(0, timesteps, steps)
             alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
             alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
             betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-            return torch.clip(betas, 0.0001, 0.9999)
+            
+            # --- FIX: Reduce the max clip value ---
+            # Changing 0.9999 -> 0.95 prevents the division-by-zero instability
+            return torch.clip(betas, 0.0001, 0.95)
         
         super().__init__()
         self.beta_start = beta_start
