@@ -1,1 +1,5 @@
 .venv
+cosine_results/
+linear_results/
+interpolation_results/
+model/

@@ -47,10 +47,10 @@ class DiffusionProcess:
         self.hidden_dims = hidden_dims
     
         # 1. Define Beta Schedule (Linear)
-        # self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
+        self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
         
         # Define Cosine Beta Schedule (alternative)
-        self.betas = cosine_beta_schedule(noise_steps).to(device)
+        # self.betas = cosine_beta_schedule(noise_steps).to(device)
         
         # 2. Calculate Alphas
         self.alphas = 1.0 - self.betas
