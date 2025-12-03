@@ -32,7 +32,8 @@ def train(epochs=10, batch_size=128, learning_rate=3e-4, device='cuda'):
     process = DiffusionProcess(
         image_size=28, 
         channels=1, 
-        hidden_dims=[32, 64, 128], 
+        # hidden_dims=[32, 64, 128], 
+        hidden_dims=[64, 128, 256, 512],
         noise_steps=1000, 
         beta_start=1e-4, 
         beta_end=0.02, 
@@ -98,4 +99,4 @@ if __name__ == "__main__":
     else:
         device = "cpu"
         
-    train(epochs=150, batch_size=128, device=device)
+    train(epochs=100, batch_size=128, device=device)

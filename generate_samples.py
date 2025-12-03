@@ -30,7 +30,7 @@ def generate_final_samples():
     
     # Load trained model
     print("Loading trained model...")
-    process.model.load_state_dict(torch.load("./model/ddpm_mnist_linear.pth", map_location=device))
+    process.model.load_state_dict(torch.load("./model/ddpm_mnist_improved.pth", map_location=device))
     process.model.eval()
     print("Model loaded successfully!")
     
@@ -39,8 +39,8 @@ def generate_final_samples():
     with torch.no_grad():
         final_samples = process.sample(num_samples=64)
         final_samples = (final_samples + 1) / 2  # Denormalize
-        save_image(final_samples, "./linear_results/final_comparison_8x8.png", nrow=8)
+        save_image(final_samples, "./results/final_comparison_8x8.png", nrow=8)
     
-    print("Final 8x8 grid saved to ./linear_results/final_comparison_8x8.png")
+    print("Final 8x8 grid saved to ./results/final_comparison_8x8.png")
 if __name__ == "__main__":
     generate_final_samples()
