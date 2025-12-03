@@ -98,4 +98,4 @@ if __name__ == "__main__":
     else:
         device = "cpu"
         
-    train(epochs=300, batch_size=128, device=device)
+    train(epochs=150, batch_size=128, device=device)
