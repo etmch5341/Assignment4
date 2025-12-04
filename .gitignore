@@ -2,7 +2,7 @@
 cosine_results/
 linear_results/
 interpolation_results/
-model/
+# model/
 old_linear_results/
 cosine_results_100/
 linear_results_100/
