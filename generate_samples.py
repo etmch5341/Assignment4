@@ -21,7 +21,8 @@ def generate_final_samples():
     process = DiffusionProcess(
         image_size=28, 
         channels=1, 
-        hidden_dims=[32, 64, 128], 
+        # hidden_dims=[32, 64, 128], 
+        hidden_dims=[64, 128, 256, 512],
         noise_steps=1000, 
         beta_start=1e-4, 
         beta_end=0.02, 
@@ -30,7 +31,7 @@ def generate_final_samples():
     
     # Load trained model
     print("Loading trained model...")
-    process.model.load_state_dict(torch.load("./model/ddpm_mnist_improved.pth", map_location=device))
+    process.model.load_state_dict(torch.load("./model/ddpm_mnist_4layer.pth", map_location=device))
     process.model.eval()
     print("Model loaded successfully!")
     
@@ -39,8 +40,8 @@ def generate_final_samples():
     with torch.no_grad():
         final_samples = process.sample(num_samples=64)
         final_samples = (final_samples + 1) / 2  # Denormalize
-        save_image(final_samples, "./results/final_comparison_8x8.png", nrow=8)
+        save_image(final_samples, "./results_4layer/final_comparison_8x8.png", nrow=8)
     
-    print("Final 8x8 grid saved to ./results/final_comparison_8x8.png")
+    print("Final 8x8 grid saved to ./results_4layer/final_comparison_8x8.png")
 if __name__ == "__main__":
     generate_final_samples()
