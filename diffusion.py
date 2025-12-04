@@ -25,7 +25,7 @@ class DiffusionProcess:
             
             # --- FIX: Reduce the max clip value ---
             # Changing 0.9999 -> 0.95 prevents the division-by-zero instability
-            return torch.clip(betas, 0.0001, 0.99)
+            return torch.clip(betas, 0.0001, 0.95)
         
         super().__init__()
         self.beta_start = beta_start
@@ -62,7 +62,7 @@ class DiffusionProcess:
         
         # 4. Initialize Model and Optimizer
         self.model = DiffusionModel(image_size, channels, hidden_dims).to(device)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=3e-4)
         self.criterion = nn.MSELoss()
         
     def add_noise(self, x, t):
@@ -215,6 +215,7 @@ class DiffusionModel(nn.Module):
         # TODO: Implement the final output layer
         # Create a final convolution to map to the output channels
         
+        # === 3 layer model with 32,64,128 hidden dims ===
         # # Save parameters
         # self.image_size = image_size
         # self.channels = channels
@@ -379,6 +380,7 @@ class DiffusionModel(nn.Module):
         # 7. Apply final convolution
         # 8. Return the output tensor
         # pass
+        # === 3 layer model forward pass with 32,64,128 hidden dims ===
         # # 1. Embed Time
         # t = t.float().unsqueeze(-1) 
         # t_emb = self.time_mlp(t)
