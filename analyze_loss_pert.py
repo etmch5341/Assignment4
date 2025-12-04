@@ -95,13 +95,8 @@ def analyze_loss_per_timestep(model_path, device='cpu', num_bins=10):
     plt.plot(bin_centers, avg_bin_losses, marker='o', linewidth=2, markersize=8)
     plt.xlabel('Timestep (t)', fontsize=12)
     plt.ylabel('Average MSE Loss', fontsize=12)
-    plt.title('Loss vs Timestep - Early Timesteps (High Noise) are Harder', fontsize=14)
+    plt.title('Loss vs Timestep', fontsize=14)
     plt.grid(True, alpha=0.3)
-    
-    # Add annotations
-    plt.axvline(x=200, color='green', linestyle='--', alpha=0.5, label='Late timesteps (easy)')
-    plt.axvline(x=800, color='red', linestyle='--', alpha=0.5, label='Early timesteps (hard)')
-    plt.legend()
     
     plt.tight_layout()
     plt.savefig('./loss_per_timestep.png', dpi=300)
@@ -121,7 +116,7 @@ if __name__ == "__main__":
     print(f"Using device: {device}\n")
     
     # Analyze best model (linear 4-layer)
-    MODEL_PATH = "./model/ddpm_mnist_4layer_linear.pth"
+    MODEL_PATH = "./model/ddpm_mnist_4layer_cosine.pth"
     
     timesteps, losses = analyze_loss_per_timestep(
         model_path=MODEL_PATH,
