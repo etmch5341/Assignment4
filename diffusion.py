@@ -25,7 +25,7 @@ class DiffusionProcess:
             
             # --- FIX: Reduce the max clip value ---
             # Changing 0.9999 -> 0.95 prevents the division-by-zero instability
-            return torch.clip(betas, 0.0001, 0.95)
+            return torch.clip(betas, 0.0001, 0.99)
         
         super().__init__()
         self.beta_start = beta_start
@@ -47,10 +47,10 @@ class DiffusionProcess:
         self.hidden_dims = hidden_dims
     
         # 1. Define Beta Schedule (Linear)
-        # self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
+        self.betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
         
         # Define Cosine Beta Schedule (alternative)
-        self.betas = cosine_beta_schedule(noise_steps).to(device)
+        # self.betas = cosine_beta_schedule(noise_steps).to(device)
         
         # 2. Calculate Alphas
         self.alphas = 1.0 - self.betas
@@ -62,7 +62,7 @@ class DiffusionProcess:
         
         # 4. Initialize Model and Optimizer
         self.model = DiffusionModel(image_size, channels, hidden_dims).to(device)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=3e-4)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-4)
         self.criterion = nn.MSELoss()
         
     def add_noise(self, x, t):

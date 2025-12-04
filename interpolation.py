@@ -20,7 +20,8 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
     model = DiffusionModel(
         image_size=28,
         channels=1,
-        hidden_dims=[32, 64, 128]
+        # hidden_dims=[32, 64, 128]
+        hidden_dims=[64, 128, 256, 512]
     ).to(device)
     
     # Load trained weights
@@ -46,7 +47,7 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
         alphas_cumprod = torch.cos(((x / timesteps) + s) / (1 + s) * math.pi * 0.5) ** 2
         alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
         betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
-        return torch.clip(betas, 0.0001, 0.95)
+        return torch.clip(betas, 0.0001, 0.99)
     betas = cosine_beta_schedule(noise_steps).to(device)
     
     # Calculate alphas
@@ -103,13 +104,13 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
     
     output_path = "./interpolation_results/interpolation.png"
     save_image(x, output_path, nrow=num_interpolations)
-    print(f"✓ Interpolation saved to {output_path}")
+    print(f"Interpolation saved to {output_path}")
     
     return x
 
 if __name__ == "__main__":
     # Configuration
-    MODEL_PATH = "./model/ddpm_mnist_cosine.pth"  # Update this path if needed
+    MODEL_PATH = "./model/ddpm_mnist_4layer_cosine.pth"  # Update this path if needed
     
     # Auto-detect best available device
     if torch.cuda.is_available():
