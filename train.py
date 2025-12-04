@@ -64,7 +64,7 @@ def train(epochs=10, batch_size=128, learning_rate=3e-4, device='cuda'):
         loss_history.append(avg_loss)
         
         # 5. Sampling (Save images to disk only)
-        # We save samples periodically so you can check progress in the file explorer
+        # save samples periodically so can check progress
         if (epoch + 1) % 1 == 0 or epoch == epochs - 1:
             process.model.eval()
             with torch.no_grad():
@@ -78,7 +78,7 @@ def train(epochs=10, batch_size=128, learning_rate=3e-4, device='cuda'):
     torch.save(process.model.state_dict(), "./models/ddpm_mnist.pth")
     print("Training Complete. Model saved.")
     
-    # 7. Plot and Save Training Curve (Final Step)
+    # 7. Plot and Save Training Curve
     plt.figure(figsize=(10, 5))
     plt.plot(loss_history, label='Training Loss')
     plt.title('Diffusion Model Training Loss')

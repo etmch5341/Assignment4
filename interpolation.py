@@ -16,7 +16,7 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
     # Setup
     os.makedirs("./interpolation_results", exist_ok=True)
     
-    # Initialize model architecture (must match training)
+    # Initialize model architecture (match training)
     model = DiffusionModel(
         image_size=28,
         channels=1,
@@ -30,16 +30,16 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
     model.eval()
     print("Model loaded successfully!")
     
-    # Initialize noise schedule (must match training)
+    # Initialize noise schedule (match training)
     noise_steps = 1000
     beta_start = 1e-4
     beta_end = 0.02
     
-    # Choose schedule type (change this to match what you used in training)
+    # Choose schedule type (match training)
     # Option 1: Linear schedule
     # betas = torch.linspace(beta_start, beta_end, noise_steps).to(device)
     
-    # Option 2: Cosine schedule (uncomment if you used this)
+    # Option 2: Cosine schedule
     import math
     def cosine_beta_schedule(timesteps, s=0.008):
         steps = timesteps + 1
@@ -110,7 +110,7 @@ def visualize_interpolation(model_path, device='cpu', num_interpolations=8):
 
 if __name__ == "__main__":
     # Configuration
-    MODEL_PATH = "./model/ddpm_mnist_4layer_cosine.pth"  # Update this path if needed
+    MODEL_PATH = "./model/ddpm_mnist_4layer_cosine.pth"
     
     # Auto-detect best available device
     if torch.cuda.is_available():

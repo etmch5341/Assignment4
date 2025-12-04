@@ -17,11 +17,11 @@ class DDIMSampler(DiffusionProcess):
     achieving 10-100x speedup with minimal quality loss.
     """
     def __init__(self, model_path, image_size=28, channels=1, device='cuda'):
-        # Initialize with your 4-level architecture
+        # Initialize with 4-level architecture
         super().__init__(
             image_size=image_size, 
             channels=channels, 
-            hidden_dims=[64, 128, 256, 512],  # Your 4-level architecture
+            hidden_dims=[64, 128, 256, 512],  # 4-level architecture
             noise_steps=1000, 
             beta_start=1e-4, 
             beta_end=0.02, 
@@ -32,10 +32,10 @@ class DDIMSampler(DiffusionProcess):
         print(f"Loading model from {model_path}...")
         try:
             self.model.load_state_dict(torch.load(model_path, map_location=device))
-            print(f"✓ Successfully loaded 4-level model [64, 128, 256, 512]")
+            print(f"  Successfully loaded 4-level model [64, 128, 256, 512]")
         except RuntimeError as e:
-            print(f"✗ Error loading model: {e}")
-            print("Make sure the model architecture matches your saved checkpoint!")
+            print(f"Error loading model: {e}")
+            print("Check model architecture matches saved checkpoint")
             raise
             
         self.model.eval()
@@ -109,9 +109,9 @@ def test_model_predictions(sampler):
         
         # Should be roughly Gaussian: mean≈0, std≈1
         if abs(pred_noise.mean()) > 0.5 or pred_noise.std() < 0.5:
-            print("  ⚠️  WARNING: Model predictions look unusual!")
+            print("    WARNING: Model predictions look unusual!")
         else:
-            print("  ✓ Model predictions look reasonable")
+            print("    Model predictions look reasonable")
 
 def compare_samplers():
     """
@@ -123,15 +123,14 @@ def compare_samplers():
     
     os.makedirs("./results_ddim", exist_ok=True)
     
-    # Initialize DDIM sampler with your trained model
-    MODEL_PATH = "./model/ddpm_mnist_4layer_linear.pth"  # Update if different
+    # Initialize DDIM sampler with trained model
+    MODEL_PATH = "./model/ddpm_mnist_4layer_linear.pth"
     
     try:
         sampler = DDIMSampler(MODEL_PATH, image_size=28, channels=1, device=device)
         test_model_predictions(sampler)
     except FileNotFoundError:
         print(f"Error: Model file not found at {MODEL_PATH}")
-        print("Please train a model first or update MODEL_PATH")
         return
     
     print("\n" + "="*60)
@@ -144,7 +143,7 @@ def compare_samplers():
     ddpm_samples = sampler.sample(num_samples=16)
     ddpm_time = time.time() - start
     save_image((ddpm_samples + 1) / 2, "./results_ddim/ddpm_1000.png", nrow=4)
-    print(f"  ✓ Complete in {ddpm_time:.2f}s")
+    print(f"    Complete in {ddpm_time:.2f}s")
     
     # 2. DDIM Sampling (100 steps)
     print("\n[2/4] Running DDIM (100 steps, eta=0.0)...")
@@ -152,8 +151,8 @@ def compare_samplers():
     ddim_100 = sampler.sample_ddim(num_samples=16, ddim_steps=100, eta=0.0)
     ddim_100_time = time.time() - start
     save_image((ddim_100 + 1) / 2, "./results_ddim/ddim_100.png", nrow=4)
-    print(f"  ✓ Complete in {ddim_100_time:.2f}s")
-    print(f"  → Speedup: {ddpm_time/ddim_100_time:.1f}x faster than DDPM")
+    print(f"    Complete in {ddim_100_time:.2f}s")
+    print(f"     Speedup: {ddpm_time/ddim_100_time:.1f}x faster than DDPM")
 
     # 3. DDIM Sampling (50 steps)
     print("\n[3/4] Running DDIM (50 steps, eta=0.0)...")
@@ -161,8 +160,8 @@ def compare_samplers():
     ddim_50 = sampler.sample_ddim(num_samples=16, ddim_steps=50, eta=0.0)
     ddim_50_time = time.time() - start
     save_image((ddim_50 + 1) / 2, "./results_ddim/ddim_50.png", nrow=4)
-    print(f"  ✓ Complete in {ddim_50_time:.2f}s")
-    print(f"  → Speedup: {ddpm_time/ddim_50_time:.1f}x faster than DDPM")
+    print(f"    Complete in {ddim_50_time:.2f}s")
+    print(f"     Speedup: {ddpm_time/ddim_50_time:.1f}x faster than DDPM")
     
     # 4. DDIM Sampling (10 steps)
     print("\n[4/4] Running DDIM (10 steps, eta=0.0)...")
@@ -170,10 +169,10 @@ def compare_samplers():
     ddim_10 = sampler.sample_ddim(num_samples=16, ddim_steps=10, eta=0.0)
     ddim_10_time = time.time() - start
     save_image((ddim_10 + 1) / 2, "./results_ddim/ddim_10.png", nrow=4)
-    print(f"  ✓ Complete in {ddim_10_time:.2f}s")
-    print(f"  → Speedup: {ddpm_time/ddim_10_time:.1f}x faster than DDPM")
+    print(f"    Complete in {ddim_10_time:.2f}s")
+    print(f"     Speedup: {ddpm_time/ddim_10_time:.1f}x faster than DDPM")
     
-    # 5. Create Comparison Visualization (Updated for 4 columns)
+    # 5. Create Comparison Visualization (w/ 4 columns)
     print("\n" + "="*60)
     print("Creating comparison grid...")
     
@@ -195,7 +194,7 @@ def compare_samplers():
     plt.tight_layout()
     plt.savefig("./results_ddim/comparison_grid.png", dpi=300, bbox_inches='tight')
     
-    print(f"✓ Comparison grid saved to ./results_ddim/comparison_grid.png")
+    print(f"  Comparison grid saved to ./results_ddim/comparison_grid.png")
     
     # 5. Summary Statistics
     print("\n" + "="*60)
@@ -206,7 +205,7 @@ def compare_samplers():
     print(f"DDIM (50 steps):    {ddim_50_time:.2f}s  [{ddpm_time/ddim_50_time:.1f}x speedup]")
     print(f"DDIM (10 steps):    {ddim_10_time:.2f}s  [{ddpm_time/ddim_10_time:.1f}x speedup]")
     print("="*60)
-    print("\n✓ All results saved to ./results_ddim/")
+    print("\n  All results saved to ./results_ddim/")
 
 if __name__ == "__main__":
     compare_samplers()

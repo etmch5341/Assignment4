@@ -27,7 +27,7 @@ def analyze_loss_per_timestep(model_path, device='cpu', num_bins=10):
     diffusion = DiffusionProcess(
         image_size=28,
         channels=1,
-        hidden_dims=[64, 128, 256, 512],  # Use your 4-layer config
+        hidden_dims=[64, 128, 256, 512],  # Use 4-layer config
         noise_steps=1000,
         beta_start=1e-4,
         beta_end=0.02,
@@ -120,8 +120,8 @@ if __name__ == "__main__":
     
     print(f"Using device: {device}\n")
     
-    # Analyze your best model (linear 4-layer)
-    MODEL_PATH = "./model/ddpm_mnist_4layer_linear.pth"  # Update this path
+    # Analyze best model (linear 4-layer)
+    MODEL_PATH = "./model/ddpm_mnist_4layer_linear.pth"
     
     timesteps, losses = analyze_loss_per_timestep(
         model_path=MODEL_PATH,

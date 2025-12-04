@@ -23,8 +23,8 @@ class DiffusionProcess:
             alphas_cumprod = alphas_cumprod / alphas_cumprod[0]
             betas = 1 - (alphas_cumprod[1:] / alphas_cumprod[:-1])
             
-            # --- FIX: Reduce the max clip value ---
-            # Changing 0.9999 -> 0.95 prevents the division-by-zero instability
+            # --- Reduce the max clip value ---
+            # Changing 0.9999 -> 0.95/0.99 prevents the division-by-zero instability
             return torch.clip(betas, 0.0001, 0.99)
         
         super().__init__()
@@ -253,7 +253,7 @@ class DiffusionModel(nn.Module):
         # self.up1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         # self.up2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         
-        # # --- FIX 1: Correct Input Channels for dec1 ---
+        # # --- Correct Input Channels for dec1 ---
         # # Input is concat of upsampled bottleneck (128) + skip connection x3 (128) = 256
         # self.dec1 = nn.Sequential(
         #     nn.Conv2d(hidden_dims[2] * 2, hidden_dims[1], kernel_size=3, padding=1),
@@ -269,7 +269,7 @@ class DiffusionModel(nn.Module):
         #     nn.SiLU()
         # )
 
-        # # --- FIX 2 & 3: Correct Time Projection Dimensions ---
+        # # --- Correct Time Projection Dimensions ---
         # # time_proj1 adds to bottleneck features (128 ch)
         # self.time_proj1 = nn.Linear(time_emb_dim, hidden_dims[2]) 
         
@@ -284,7 +284,7 @@ class DiffusionModel(nn.Module):
         self.channels = channels
         self.hidden_dims = hidden_dims
         
-        # 1. Time Embedding - CHANGE 2: Larger embedding dimension
+        # 1. Time Embedding - Larger embedding dimension
         time_emb_dim = hidden_dims[0]  # Now 64 instead of 32
         self.time_mlp = nn.Sequential(
             nn.Linear(1, time_emb_dim),
@@ -292,7 +292,7 @@ class DiffusionModel(nn.Module):
             nn.Linear(time_emb_dim, time_emb_dim),
         )
 
-        # 2. Initial Convolution - CHANGE 3: Output to 64 channels
+        # 2. Initial Convolution - Output to 64 channels
         self.inc = nn.Conv2d(channels, hidden_dims[0], kernel_size=3, padding=1)
 
         # 3. Encoder - ADD NEW down3 block
@@ -306,7 +306,7 @@ class DiffusionModel(nn.Module):
             nn.BatchNorm2d(hidden_dims[2]),
             nn.SiLU()
         )
-        # CHANGE 4: ADD down3
+        # ADDing down3
         self.down3 = nn.Sequential(
             nn.Conv2d(hidden_dims[2], hidden_dims[3], kernel_size=3, padding=1),  # 256 -> 512
             nn.BatchNorm2d(hidden_dims[3]),
@@ -314,17 +314,17 @@ class DiffusionModel(nn.Module):
         )
         self.pool = nn.MaxPool2d(2)
 
-        # 4. Bottleneck - CHANGE 5: Now operates on 512 channels
+        # 4. Bottleneck - Operating on 512 channels
         self.bot1 = nn.Conv2d(hidden_dims[3], hidden_dims[3], kernel_size=3, padding=1)
         self.bot2 = nn.Conv2d(hidden_dims[3], hidden_dims[3], kernel_size=3, padding=1)
 
-        # 5. Decoder - ADD up0 and dec0
-        # CHANGE 6: ADD first upsampling layer
+        # 5. Decoder - ADDing up0 and dec0
+        # ADD first upsampling layer
         # self.up0 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.up1 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.up2 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         
-        # CHANGE 7: ADD dec0 for first decoder block
+        # ADDing dec0 for first decoder block
         # Input: concat of upsampled bottleneck (512) + skip x4 (512) = 1024
         # self.dec0 = nn.Sequential(
         #     nn.Conv2d(hidden_dims[3] * 2, hidden_dims[2], kernel_size=3, padding=1),  # 1024 -> 256
@@ -332,7 +332,7 @@ class DiffusionModel(nn.Module):
         #     nn.SiLU()
         # )
         
-        # CHANGE 8: Update dec1 dimensions
+        # Update dec1 dimensions
         # Input: concat of upsampled dec0 (256) + skip x3 (256) = 512
         self.dec1 = nn.Sequential(
             nn.Conv2d(768, hidden_dims[1], kernel_size=3, padding=1),  # 768 -> 128
@@ -340,7 +340,7 @@ class DiffusionModel(nn.Module):
             nn.SiLU()
         )
         
-        # CHANGE 9: Update dec2 dimensions
+        # Update dec2 dimensions
         # Input: concat of upsampled dec1 (128) + skip x1 (64) = 192
         self.dec2 = nn.Sequential(
             nn.Conv2d(hidden_dims[1] + hidden_dims[0], hidden_dims[0], kernel_size=3, padding=1),  # 192 -> 64
@@ -349,13 +349,13 @@ class DiffusionModel(nn.Module):
         )
 
         # 6. Time Projections - ADD time_proj0 and update others
-        # CHANGE 10: ADD time_proj0
+        # ADD time_proj0
         # self.time_proj0 = nn.Linear(time_emb_dim, hidden_dims[3])  # 64 -> 512
         
-        # CHANGE 11: Update time_proj1
+        # Update time_proj1
         self.time_proj1 = nn.Linear(time_emb_dim, hidden_dims[3])  # 64 -> 512
         
-        # CHANGE 12: Update time_proj2
+        # Update time_proj2
         self.time_proj2 = nn.Linear(time_emb_dim, hidden_dims[1])  # 64 -> 128
 
         # 7. Final Output - channels stay the same
@@ -402,7 +402,7 @@ class DiffusionModel(nn.Module):
         # # 5. Decoder Step 1
         # x_up1 = self.up1(x_bot)     # (B, 128, 14, 14)
         
-        # # Fix: time_emb1 is now 128 channels, matches x_up1
+        # # time_emb1 is 128 channels, matches x_up1
         # time_emb1 = self.time_proj1(t_emb).unsqueeze(-1).unsqueeze(-1)
         # x_up1 = x_up1 + time_emb1 
         
@@ -413,13 +413,13 @@ class DiffusionModel(nn.Module):
         # # 6. Decoder Step 2
         # x_up2 = self.up2(x_dec1)    # (B, 64, 28, 28)
         
-        # # Fix: time_emb2 is now 64 channels, matches x_up2
+        # # time_emb2 is 64 channels, matches x_up2
         # time_emb2 = self.time_proj2(t_emb).unsqueeze(-1).unsqueeze(-1)
         # x_up2 = x_up2 + time_emb2
         
-        # # Concatenation: 64 + 32 = 96 channels
+        # # Concatenation: 64 + 64 = 128 channels
         # x_cat2 = torch.cat([x_up2, x1], dim=1) 
-        # x_dec2 = self.dec2(x_cat2)  # Output is 32 channels
+        # x_dec2 = self.dec2(x_cat2)  # Output is 64 channels
 
         # # 7. Final
         # output = self.outc(x_dec2)  # Output is 1 channel
@@ -442,16 +442,16 @@ class DiffusionModel(nn.Module):
         x3_p = self.pool(x3)        # (B, 256, 7, 7)
         
         x4 = self.down3(x3_p)       # (B, 512, 7, 7)
-        # FIX: DON'T POOL HERE - keep at 7×7
-        # x4_p = self.pool(x4)      # ← REMOVE THIS LINE
+        # DON'T POOL HERE - keep at 7×7
+        # x4_p = self.pool(x4)      # REMOVE THIS 
 
         # 4. Bottleneck - operates on x4 (7×7), not x4_p
         x_bot = self.bot1(x4)       # (B, 512, 7, 7)
         x_bot = self.bot2(x_bot)    # (B, 512, 7, 7)
 
         # 5. Decoder
-        # FIX: Skip the up0 step entirely since we're already at 7×7
-        # x_up0 = self.up0(x_bot)   # ← REMOVE THIS
+        # Skip the up0 step entirely since we're already at 7×7
+        # x_up0 = self.up0(x_bot)   # REMOVE THIS
         # time_emb0 = self.time_proj0(t_emb).unsqueeze(-1).unsqueeze(-1)
         # x_up0 = x_up0 + time_emb0 
         # x_cat0 = torch.cat([x_up0, x4], dim=1)

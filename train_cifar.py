@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
 
-# Import your existing diffusion classes
 from diffusion import DiffusionModel, DiffusionProcess
 
 def train_cifar(epochs=100, batch_size=64, device='cuda'):
@@ -37,11 +36,11 @@ def train_cifar(epochs=100, batch_size=64, device='cuda'):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=2)
 
     # Initialize Diffusion Process with CIFAR-10 parameters
-    # Using your proven configuration: 4-level architecture, linear schedule, lr=1e-4
+    # Using best proven config: 4-level architecture, linear schedule, lr=1e-4
     process = DiffusionProcess(
         image_size=32,              # CIFAR is 32x32 (vs 28x28 for MNIST)
         channels=3,                 # RGB (vs 1 for MNIST)
-        hidden_dims=[64, 128, 256, 512],  # Your best architecture
+        hidden_dims=[64, 128, 256, 512],  # Best architecture
         noise_steps=1000,
         beta_start=1e-4,
         beta_end=0.02,
@@ -129,6 +128,5 @@ if __name__ == "__main__":
     # Note: CIFAR-10 is more complex than MNIST
     # - More colors/textures to learn
     # - Higher resolution (32x32 vs 28x28)
-    # - Expect slower convergence and potentially higher final loss
     
     train_cifar(epochs=100, batch_size=64, device=device)
