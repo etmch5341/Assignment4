@@ -136,7 +136,7 @@ class DiffusionProcess:
                 
         self.model.train() # Set back to train mode
         
-        # Clamp values to valid image range [-1, 1] (optional but good practice)
+        # Clamp values to valid image range [-1, 1]
         x = x.clamp(-1, 1)
         
         return x
